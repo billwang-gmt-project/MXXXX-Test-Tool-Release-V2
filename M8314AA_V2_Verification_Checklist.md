@@ -16,7 +16,9 @@ M8314AA 在 GmtTestToolV2 的重點驗證項目與觀察事項，給新進工程
 | 開窗相位 | 切換操作模式：UserMode 只有 10° / 15° 兩項，BackDoor / Engineering 顯示四項；從 BackDoor 切回 UserMode 時，若原本選第 3/4 項會自動歸零 | 只顯示 10° / 15° |
 | LA_sel 相角 | 切換操作模式：UserMode 只有 9.5° / 16° 兩項，BackDoor / Engineering 顯示四項；從 BackDoor 切回 UserMode 時，若原本選第 3/4 項會自動歸零 | 只顯示 9.5° / 16° |
 | XP1 Shutdown Mode (%) | 隨 XP1 目前值即時重算四個選項（XP1、XP1 − 3.125、XP1 − 6.25、XP1 − 9.375，最小 0） | 顯示 |
-| FG Ratio、Open Loop RPM、Close Loop RPM | 隨速度曲線模式切換（詳見第 4 節） | **完全隱藏** |
+| FG Ratio（REG09[5:0]） | 三個下拉共用同一組選項（由 SO Type 依 FG Ratio 公式動態產生、排序後的 RPM 值）。FG Ratio 欄位在 Online 模式由硬體策略即時 RPM 覆寫；Offline / PGM 依當前速度曲線模式取用 OOO→Open Loop 選項，其餘（COO / CCO / CCC）→Close Loop 選項（詳見第 4 節） | **隱藏**（XAML 以 `IsBackDoorOrEngineeringMode` 控制可見性，UserMode 整個 ListBoxItem 容器不顯示；內部屬性仍存在，snapshot 照常寫入 / 還原） |
+| Open Loop RPM | 選項內容與 FG Ratio 共享；在 OOO 模式被 FG Ratio 取用，其他速度曲線模式下切換 COO / CCC 時會被 `AutoAssignRpmSelections` 強制跟隨 Close Loop 的 index | **隱藏**（同上條件） |
+| Close Loop RPM | 選項內容與 FG Ratio 共享；COO / CCO / CCC 模式 FG Ratio 取自此下拉；index 變更時會推送到 `_mxxxxConfigService.CurrentConfig.CloseLoopRpm` 供 Online RPM 公式使用 | **隱藏**（同上條件，但 CCC 控制項本身在 BackDoor / Engineering 才顯示） |
 
 ---
 
