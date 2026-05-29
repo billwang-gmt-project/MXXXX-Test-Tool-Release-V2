@@ -156,12 +156,12 @@ abs(Yp1DutyPercent − 4.64) < 0.005   →  YP1 開路
 
 | mode | 子條件 | 分支 | 來源欄位 |
 |:----:|--------|:----:|----------|
-| 0（shutdown） | non-FR + SET | V_high | `reg_data_02[4:0]` × 4 |
-| 0（shutdown） | FR + VSP | V_low | `reg_data_02[4:0]` × 4 |
+| 0（shutdown） | non-FR | V_high | `reg_data_02[4:0]` × 4 |
+| 0（shutdown） | FR | V_low | `reg_data_02[4:0]` × 4 |
 | 1（shutdown） | non-FR | V_high | `reg_data_02[4:0]` × 4 |
 | 1（shutdown） | FR | V_low | `reg_data_02[4:0]` × 4 |
-| 7（shutdown） | non-FR + VSP | V_high | `reg_data_02[4:0]` × 4 |
-| 7（shutdown） | FR + SET | V_low | `reg_data_02[4:0]` × 4 |
+| 7（shutdown） | non-FR | V_high | `reg_data_02[4:0]` × 4 |
+| 7（shutdown） | FR | V_low | `reg_data_02[4:0]` × 4 |
 | 2 + FR | shutdown | V_high | `reg_data_02[4:0]` × 4 |
 | 2 + FR | minimum | V_low | `reg_data_02[4:0]` × 4 |
 | 3 + non-FR | shutdown | V_high | `reg_data_02[4:0]` × 4 |
@@ -237,18 +237,22 @@ SS pin **不用 §3 公式**，直接由查表決定。
 
 ### 6.3 Close-loop SS 電壓表
 
-Close-loop（mode 4/5/6）時，SS 電壓只看 `rpm_ratio`：
+Close-loop（mode 4/5/6）時，SS 電壓看 `rpm_ratio`，並依 **XP1 或 YP 是否落在 Fix-H/Fix-L band** 選兩張表之一（2026-05-29 spec）：
 
-| rpm_ratio | min_rpm 合法範圍 (RP1, 7-bit) | max_rpm 合法範圍 (RP2, 8-bit) | SS 電壓 |
-|----------:|------------------------------:|------------------------------:|--------:|
-| 2.54  | 149.86 – 424.18   | 149.86 – 2740.66   | 0.00 V |
-| 3.72  | 219.48 – 621.24   | 219.48 – 4013.88   | 0.92 V |
-| 5.59  | 329.81 – 933.53   | 329.81 – 6031.61   | 1.55 V |
-| 8.30  | 489.70 – 1386.10  | 489.70 – 8955.70   | 2.18 V |
-| 12.20 | 719.80 – 2037.40  | 719.80 – 13163.80  | 2.80 V |
-| 17.79 | 1049.61 – 2970.93 | 1049.61 – 19195.41 | 3.43 V |
-| 25.93 | 1529.87 – 4330.31 | 1529.87 – 27978.47 | 4.06 V |
-| 37.96 | 2239.64 – 6339.32 | 2239.64 – 40958.84 | 5.00 V |
+| rpm_ratio | min_rpm 合法範圍 (RP1, 7-bit) | max_rpm 合法範圍 (RP2, 8-bit) | SS 電壓 (Not-Fix) | SS 電壓 (Fix) |
+|----------:|------------------------------:|------------------------------:|------------------:|--------------:|
+| 2.54  | 149.86 – 424.18   | 149.86 – 2740.66   | 0.00 V | 4.06 V |
+| 3.72  | 219.48 – 621.24   | 219.48 – 4013.88   | 0.92 V | 5.00 V |
+| 5.59  | 329.81 – 933.53   | 329.81 – 6031.61   | 1.55 V | 0.00 V |
+| 8.30  | 489.70 – 1386.10  | 489.70 – 8955.70   | 2.18 V | 0.92 V |
+| 12.20 | 719.80 – 2037.40  | 719.80 – 13163.80  | 2.80 V | 1.55 V |
+| 17.79 | 1049.61 – 2970.93 | 1049.61 – 19195.41 | 3.43 V | 2.18 V |
+| 25.93 | 1529.87 – 4330.31 | 1529.87 – 27978.47 | 4.06 V | 2.80 V |
+| 37.96 | 2239.64 – 6339.32 | 2239.64 – 40958.84 | 5.00 V | 3.43 V |
+
+> **Fix 選表規則（2026-05-29 spec）**：當 XP1 或 YP 任一 pin 電壓落在 ADC rail band（Fix-H ≈ code 246..255、Fix-L ≈ code 0..9，對齊 [`Helpers/M8160AdcTable.cs`](../../../Helpers/M8160AdcTable.cs) `IsFix` / `IsFixVoltage`）時，SS 改用 **Fix 表**（Not-Fix 表整體旋轉後的版本）；否則用 Not-Fix 表。實作於 [`Helpers/M8160ForwardCalculator.cs`](../../../Helpers/M8160ForwardCalculator.cs) `CalcSs(anyPinFix)`，旗標由 `Calculate()` 從 XP1 / YP 的 `TargetVoltage` 反推。
+>
+> ⚠ close-loop 的 Fix 是看 RP1/RP2 算出的 pin 電壓是否進 rail band；與 open-loop 的「4.64% open-circuit 捷徑」(`xp1=3` / `yp1=12`, `Status=OpenCircuit`) 屬不同路徑，僅後者只在 mode 0/1/2/3/7 觸發。
 
 > **2026-05-08 spec：min_rpm 與 max_rpm 上限不同**。代數推導：
 >
@@ -428,9 +432,11 @@ function Calculate(inputs) -> List<ResultRow>:
     rows.add(RegRow("reg_0e[5]",   1,                        "§1.2 low_freq_rev"))
 
     // Step 4~6: 三支腳位
-    rows.add(CalcXp1(inputs, mode))
-    rows.add(CalcYp(inputs, mode))
-    rows.add(CalcSs(inputs, mode))
+    xp1Row = CalcXp1(inputs, mode); rows.add(xp1Row)
+    ypRow  = CalcYp(inputs, mode);  rows.add(ypRow)
+    // close-loop SS 選表需知 XP1/YP pin V 是否落 Fix-H/Fix-L band（由 pin TargetVoltage 反推）
+    anyPinFix = IsFixVoltage(xp1Row.Voltage) or IsFixVoltage(ypRow.Voltage)   // §6.3 / M8160AdcTable.IsFixVoltage
+    rows.add(CalcSs(inputs, mode, anyPinFix))
 
     // Step 7: 每個有電壓的 row 推算建議 R 對
     for r in rows where r.Voltage != null:
@@ -571,11 +577,13 @@ function CalcYp(in, mode) -> ResultRow:
 ### 10.6 SS 計算
 
 ```
-function CalcSs(in, mode) -> ResultRow:
+function CalcSs(in, mode, anyPinFix) -> ResultRow:
     // Close-loop：直接 rpm_ratio 查表 (§6.3)
     // 2026-05-08 spec：OutOfRange 改用 RP1/RP2 雙 bound（之前單 bound 漏 RP1 max）
+    // 2026-05-29 spec：XP1 或 YP pin V 落 ADC rail band (Fix-H/Fix-L) → 用 Fix 表（旋轉版）
     if mode in {4,5,6}:
-        v = SS_TABLE_63_VOLTAGE[in.RpmRatio]               // 8 entries (SS 電壓)
+        v = anyPinFix ? SS_TABLE_63_FIX_VOLTAGE[in.RpmRatio]   // Fix 表（旋轉版）
+                      : SS_TABLE_63_VOLTAGE[in.RpmRatio]       // Not-Fix 表
         ratio = ratios[in.RpmRatio]
         rp1Upper = 167 * ratio                              // RP1 7-bit saturation 含 ADC −20 shift (MinRpm 上限)
         rp2Upper = 1079 * ratio                             // RP2 8-bit saturation (MaxRpm 上限)
@@ -596,7 +604,7 @@ function CalcSs(in, mode) -> ResultRow:
                Rule="§6.2 mode=" + mode + " pole=" + in.Pole + " profile=" + profile)
 ```
 
-`SS_TABLE_A` / `SS_TABLE_B` 來自 §6.1，`SS_TABLE_63` / `SS_TABLE_63_RANGE` 來自 §6.3。
+`SS_TABLE_A` / `SS_TABLE_B` 來自 §6.1，`SS_TABLE_63_VOLTAGE`（Not-Fix）/ `SS_TABLE_63_FIX_VOLTAGE`（Fix，旋轉版）/ `SS_TABLE_63_RANGE` 來自 §6.3。`SelectXp1Branch` 見 §4 表（mode 0/1/7 = non-FR → V_high）。
 
 ### 10.7 建議 resistor 對
 
@@ -887,6 +895,8 @@ else if(mode==4 or mode==5 or mode==6)
 | 9 | Mode-derived 6 常數 | 完全未列 | `fan_curve` / `rpm_ratio` / `icmd_sw` / `auto_soft_sw` / `duty_deb_sw` / `low_freq_rev` 六個 row | `225a6893` |
 | 10 | XP1 / YP1 duty 精度 | 4.6%（兩位小數） | **4.64%**（dropdown 第 12 格 `38.28 × 12 / 99 = 4.6398` round 到 0.01% 精度），容差 `0.005` | §1.1 |
 | 11 | rpm_ratio dropdown 顯示 | 未提 | 顯示 ratio 數值（例如 `2.54`、`3.72`），不是 index | `0b26bb2d` / `9501c91b` |
+| 12 | XP1 branch mode 0 / 7 | mode 0 `if(non_FR & SET)` → V_high；mode 7 `if(non_FR & VSP)` → V_high（含 VSP/SET 子條件） | mode 0 / 7 簡化為 `HallType == NonFR` → V_high（移除 VSP/SET）；mode 0/1/7 統一 non-FR → V_high、FR → V_low | 2026-05-29 |
+| 13 | Close-loop SS 電壓表 | 單一 `SS_TABLE_63`（依 rpm_ratio 查表） | 雙表：XP1 或 YP pin V 落 ADC rail band（Fix-H/Fix-L，`M8160AdcTable.IsFixVoltage`）→ `SS_TABLE_63_FIX_VOLTAGE`（旋轉版）；否則 `SS_TABLE_63_VOLTAGE` | 2026-05-29 |
 
 ### 12.1 為何現行實作與設計原稿不同
 
@@ -897,3 +907,5 @@ else if(mode==4 or mode==5 or mode==6)
 5. **Mode-derived 6 常數**：原設計工具只算 4 支腳位電壓 + 5 個 forced bit，但實際燒錄需要完整 register set；commit `225a6893` 補上。
 6. **`xp1==60*rpm_ratio` 開路語意移除**：close-loop 沒有「腳位開路」這個 design-time 概念（4.64% 開路只屬於 open-loop XP1/YP1）。
 7. **mode = 7 拆 O2a / O2b**：原稿 `(PWM_non_invert or DC_mode)` 邏輯不嚴謹（DC mode 還要看 hall + DcSource 子分支）；Allen reverse calculator 已拆分，Forward 對齊。**2026-05-28 update**：O2b 已移除（DC mode 不再支援），Forward 規則表 Drive mode 欄統一 Direct-PWM。
+8. **XP1 branch mode 0 / 7 簡化為 non-FR**（2026-05-29）：使用者新 spec 取消 VSP/SET 子條件，mode 0 / 7 一律 `HallType == NonFR` → V_high。與 mode 1 一致，三者統一為 non-FR → V_high、FR → V_low。DC source（VSP/SET）原本就只在 DC mode 可選，而 DC mode 自 2026-05-28 起一律 Error，故子條件已無作用。
+9. **Close-loop SS 雙表**（2026-05-29）：使用者新 spec 要求 close-loop SS 電壓依 XP1/YP 是否處於 Fix-H/Fix-L（pin V 落 ADC rail band）切換兩張表。Fix 表為 Not-Fix 表整體旋轉後版本。旗標由 `Calculate()` 從 XP1/YP pin `TargetVoltage` 經 `M8160AdcTable.IsFixVoltage` 反推；close-loop Fix（看 RP1/RP2 pin V）與 open-loop 4.64% open-circuit 屬不同路徑。
