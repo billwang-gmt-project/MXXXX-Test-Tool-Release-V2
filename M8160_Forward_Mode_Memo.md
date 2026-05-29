@@ -414,6 +414,54 @@ Close-loop 正常分支 Forward / Reverse 互為逆運算的前提是「Forward 
 | `YpRegDutyPerBit` | `0.390625` (= 50 / 128) | open-loop YP1 每 bit duty% |
 | `VPerStep` | `5.0 / 256` ≈ `0.01953125 V` | ADC 每 step 解析度 |
 
+### A.10.1 `VoltageFromField` — register field → pin V 換算
+
+`M8160ForwardCalculator.VoltageFromField` 是 Forward 計算的核心電壓換算函式：給定一個 register field 值，回傳該腳位的 **(V_high, V_low)** 兩種候選電壓，再由各 pin 的 branch 判定（§A.4）挑其中一個當 target voltage。
+
+```csharp
+public static (double VHigh, double VLow) VoltageFromField(int field, bool times4)
+{
+    int code = (times4 ? field * 4 : field) + 20;   // ← 共用 +20 offset；times4 只用在 open-loop XP1
+    return (VoltageHigh(code), VoltageLow(code));
+}
+
+// 兩半段電壓公式（§3）：
+//   VoltageHigh(code) = (256 − code) × 5 / 256
+//   VoltageLow(code)  =  code        × 5 / 256
+```
+
+#### 三個關鍵設計點
+
+| 點 | 說明 |
+| --- | --- |
+| **`+20` offset** | code 永遠先加 20 才換算電壓。對應 spec §11 的 `+20` convention，也對齊 Reverse `xp1_pin[*] − 20 = reg[*]`（`M8160AdcCalculator.cs:586`）。**例外**：close-loop YP（`rp2`）走 Allen direct，**不經過 `VoltageFromField`**，直接 `rp2 × 5/256`（無 +20，見 §A.12 #2）。 |
+| **`times4` 參數** | 只有 **open-loop XP1**（`reg_02[4:0]`，5-bit）傳 `true`。因為 5-bit field 要 ×4 才能對齊 8-bit ADC code 的滿刻度。其餘呼叫（open-loop YP `reg_04[6:0]` 7-bit、close-loop XP1 `rp1` `reg_06[6:0]` 7-bit）皆 `times4=false`。 |
+| **回傳兩個值** | V_high / V_low 是同一 code 在 ADC 高半段 / 低半段的兩種接法電壓。實際採用哪一個由 `SelectXp1HighBranch` / `SelectYpHighBranch`（§A.4）依 mode + 子條件決定，`VoltageFromField` 本身不做 branch 判定。 |
+
+#### 三個呼叫點（對應 §A.3 pseudo-code）
+
+| 呼叫點 | mode | field | `times4` | code 公式 | 程式位置 |
+| --- | --- | --- | :---: | --- | --- |
+| open-loop XP1 | {0,1,2,3,7} | `xp1` `reg_02[4:0]` | `true` | `field × 4 + 20` | `M8160ForwardCalculator.cs:365` |
+| open-loop YP | {0,1,2,3,7} | `yp1` `reg_04[6:0]` | `false` | `field + 20` | `M8160ForwardCalculator.cs:480` |
+| close-loop XP1 | {4,5,6} | `rp1` `reg_06[6:0]` | `false` | `field + 20` | `M8160ForwardCalculator.cs:324` |
+
+> close-loop YP（`rp2`）刻意**不在**此表——它走 Allen direct（`rp2 × 5/256`），是 `VoltageFromField` 的唯一例外路徑。
+
+#### 數值範例（取自 Part B 端對端範例）
+
+```text
+open-loop XP1：field = 12, times4 = true
+  code   = 12 × 4 + 20 = 68
+  V_high = (256 − 68) × 5 / 256 = 3.672 V    ← mode=7 走 V_high branch
+  V_low  =  68         × 5 / 256 = 1.328 V
+
+open-loop YP：field = 26, times4 = false
+  code   = 26 + 20 = 46
+  V_high = (256 − 46) × 5 / 256 = 4.102 V    ← mode=7 走 V_high branch
+  V_low  =  46        × 5 / 256 = 0.898 V
+```
+
 ### A.11 結果狀態旗標
 
 Forward 結果共定義 6 種狀態旗標，**2026-05-11 起 Forbidden 旗標已啟用**（之前為預留，現實際產生於 XP1/YP pin V 落在 ADC step 116..139 forbidden band 時，即 HTML canonical 中央 gap）。Clamped 仍為預留值。
