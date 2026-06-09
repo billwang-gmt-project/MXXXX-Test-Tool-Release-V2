@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>GUI / Hardware Version — Y260605</title>
+<style>
+  :root {
+    --header-bg: #4F81BD;
+    --header-fg: #FFFFFF;
+    --preview-bg: #FFF2CC;
+    --release-bg: #D9EAD3;
+    --tested-bg: #C6EFCE;
+    --border: #B7B7B7;
+    --row-alt: #FAFAFA;
+    --bg: #FFFFFF;
+    --fg: #1F2937;
+    --muted: #6B7280;
+    --tab-bg: #E5E7EB;
+    --tab-active-bg: #4F81BD;
+    --tab-active-fg: #FFFFFF;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Segoe UI", "Microsoft JhengHei", "PingFang TC", -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  header {
+    background: linear-gradient(135deg, #4F81BD 0%, #365F91 100%);
+    color: #fff;
+    padding: 24px 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  header h1 { margin: 0; font-size: 22px; font-weight: 600; }
+  header .meta { margin-top: 4px; font-size: 13px; opacity: 0.9; }
+  main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid var(--header-bg);
+    margin-bottom: 0;
+  }
+  .tab-btn {
+    padding: 10px 24px;
+    background: var(--tab-bg);
+    border: none;
+    border-radius: 6px 6px 0 0;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--fg);
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { background: #D1D5DB; }
+  .tab-btn.active {
+    background: var(--tab-active-bg);
+    color: var(--tab-active-fg);
+  }
+  .tab-panel {
+    display: none;
+    background: var(--bg);
+    padding: 20px 0;
+  }
+  .tab-panel.active { display: block; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    background: var(--bg);
+    font-size: 13px;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+    white-space: pre-wrap;
+  }
+  thead th {
+    background: var(--header-bg);
+    color: var(--header-fg);
+    font-weight: 600;
+    text-align: center;
+    vertical-align: middle;
+  }
+  tbody tr:nth-child(even) td.parts-cell { background: var(--row-alt); }
+  td.parts-cell {
+    font-weight: 600;
+    white-space: nowrap;
+    background: #F3F4F6;
+  }
+  .badge-preview {
+    background: var(--preview-bg);
+    color: #6B5400;
+  }
+  .badge-release {
+    background: var(--release-bg);
+    color: #1F5128;
+    font-weight: 700;
+  }
+  .cell-tested { background: var(--tested-bg); }
+  .cell-na {
+    color: var(--muted);
+    text-align: center;
+    font-style: italic;
+  }
+  .status-row td {
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+
+  .history-list { list-style: none; padding: 0; margin: 0; }
+  .history-item {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    background: var(--bg);
+  }
+  .history-header {
+    background: var(--header-bg);
+    color: #fff;
+    padding: 10px 16px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .history-body {
+    padding: 14px 18px;
+    white-space: pre-wrap;
+    font-family: "Segoe UI", "Microsoft JhengHei", "PingFang TC", monospace;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .history-body .chip-tag {
+    display: inline-block;
+    background: #EEF2FF;
+    color: #3730A3;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin: 6px 0 2px;
+  }
+
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 24px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>GUI / Hardware Version 對照表</h1>
+  <div class="meta">資料日期：Y260605 ・ 來源：GUI_Hardware_version.xlsx</div>
+</header>
+
+<main>
+
+<div class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="gui" role="tab">GUI 版本</button>
+  <button class="tab-btn" data-tab="hardware" role="tab">Hardware 版本</button>
+  <button class="tab-btn" data-tab="history" role="tab">History</button>
+</div>
+
+<!-- ============================================================ -->
+<!-- GUI Tab                                                      -->
+<!-- ============================================================ -->
+<section id="tab-gui" class="tab-panel active">
+
+  <div class="legend">
+    <span class="legend-item"><span class="swatch" style="background:var(--preview-bg)"></span>Preview</span>
+    <span class="legend-item"><span class="swatch" style="background:var(--release-bg)"></span>Release</span>
+    <span class="legend-item"><span class="swatch" style="background:var(--tested-bg)"></span>已測試 / Harry 驗過</span>
+    <span class="legend-item"><span style="color:#6B7280; font-style:italic;">X = 不支援 / 無 IC</span></span>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th rowspan="2" style="min-width:140px;">Parts</th>
+        <th rowspan="2" style="min-width:80px;">Note</th>
+        <th>2.1.9657.610</th>
+        <th>2.1.9653.496</th>
+        <th>2.1.9643.487</th>
+        <th>2.1.9637.481</th>
+        <th>2.0.9628.470</th>
+        <th>2.0.9617.450</th>
+        <th>1.1.9571.22638</th>
+        <th>1.1.9525.22506</th>
+      </tr>
+      <tr class="status-row">
+        <td class="badge-preview">Preview</td>
+        <td class="badge-preview">Preview</td>
+        <td class="badge-preview">Preview</td>
+        <td class="badge-preview">Preview</td>
+        <td class="badge-preview">Preview</td>
+        <td class="badge-preview">Preview</td>
+        <td class="badge-preview">Preview</td>
+        <td class="badge-release">Release</td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="parts-cell">M8314AA</td><td></td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>不需測</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td></td>
+        <td class="cell-na">X</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8314AB</td><td></td>
+        <td>- 待Harry測試</td>
+        <td>不需測</td>
+        <td>不需測</td>
+        <td>不需測</td>
+        <td>不需測</td>
+        <td>不需測</td>
+        <td class="cell-na">X</td>
+        <td class="cell-na">X</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8314BA</td><td></td>
+        <td>不需測</td>
+        <td>不需測</td>
+        <td>不需測</td>
+        <td>不需測</td>
+        <td>不需測</td>
+        <td>不需測</td>
+        <td class="cell-na">X</td>
+        <td class="cell-na">X</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8322CA</td><td></td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 中文化</td>
+        <td class="cell-tested">- Harry測過</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8322CB</td><td></td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td class="cell-na">X</td>
+        <td class="cell-na">X</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8323XX</td><td></td>
+        <td>不需測</td>
+        <td>不需測</td>
+        <td>可不測</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 串接兩顆以上自動進入串接dashboard
+- 待Harry測試</td>
+        <td>- Support
+- 中文化</td>
+        <td>- Support</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8421BA</td><td></td>
+        <td>不需測
+- No GUI,Register Table only</td>
+        <td>不需測
+- No GUI,Register Table only</td>
+        <td>可不測
+- No GUI,Register Table only</td>
+        <td>- No GUI,Register Table only</td>
+        <td>- No GUI,Register Table only</td>
+        <td>- No GUI,Register Table only</td>
+        <td>- No change</td>
+        <td>- Support</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8421BB</td><td></td>
+        <td>不需測
+- No GUI,Register Table only</td>
+        <td>不需測
+- No GUI,Register Table only</td>
+        <td>可不測
+- No GUI,Register Table only</td>
+        <td>- No GUI,Register Table only</td>
+        <td>- No GUI,Register Table only</td>
+        <td>- No GUI,Register Table only</td>
+        <td>- No change</td>
+        <td>- Support</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8160AA</td><td></td>
+        <td>不需測
+- 內部測試中,不完整</td>
+        <td>不需測
+- 內部測試中,不完整</td>
+        <td>可不測
+- 待Harry測試
+- 內部測試中,不完整</td>
+        <td>- 待Harry測試
+- 內部測試中,不完整</td>
+        <td>- 內部測試中,不完整</td>
+        <td>- 待Harry測試
+- 內部測試中,不完整</td>
+        <td class="cell-na">X</td>
+        <td class="cell-na">X</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8123AA</td><td></td>
+        <td>不需測
+- 內部測試中,不完整</td>
+        <td>不需測
+- 內部測試中,不完整</td>
+        <td>可不測
+- 待Harry測試
+- 內部測試中,不完整</td>
+        <td>- 待Harry測試
+- 內部測試中,不完整</td>
+        <td>- 內部測試中,不完整</td>
+        <td>- 內部測試中,不完整</td>
+        <td class="cell-na">X</td>
+        <td class="cell-na">X</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">MXXXX 共通測項</td><td></td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td>- 待Harry測試</td>
+        <td class="cell-tested">- Harry驗過.Bug見Harry report</td>
+        <td>- No change</td>
+        <td class="cell-tested">- Harry測過</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:16px; color:var(--muted); font-size:12px;">詳見 <strong>History</strong> 分頁。</p>
+</section>
+
+<!-- ============================================================ -->
+<!-- Hardware Tab                                                 -->
+<!-- ============================================================ -->
+<section id="tab-hardware" class="tab-panel">
+  <table>
+    <thead>
+      <tr>
+        <th style="min-width:140px;">Parts</th>
+        <th style="min-width:80px;">Note</th>
+        <th>V260515</th>
+        <th>V250926</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="parts-cell">M8322CX</td><td></td>
+        <td>- support
+- 6V/12V自動切換</td>
+        <td>-suppot</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8314AX</td><td></td>
+        <td>- support
+- 6V/12V自動切換</td>
+        <td>-suppot,電源須外加</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8421BX</td><td></td>
+        <td>- support
+- 6V/12V自動切換</td>
+        <td>-suppot</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8160AX</td><td></td>
+        <td>- support
+- 6V/12V自動切換</td>
+        <td>-suppot</td>
+      </tr>
+      <tr>
+        <td class="parts-cell">M8123AX</td><td></td>
+        <td>- support
+- 6V/12V自動切換</td>
+        <td>-suppot</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<!-- History Tab                                                  -->
+<!-- ============================================================ -->
+<section id="tab-history" class="tab-panel">
+  <ul class="history-list">
+    <li class="history-item">
+      <div class="history-header">V2.1.9657.610</div>
+      <div class="history-body"><span class="chip-tag">Firmware</span>
+- 更新韌體至 V26060500
+- <strong>目標 bank 已燒、內容不同卻想覆寫</strong> → 擋下（防止蓋掉成品）。若內容剛好相同 → 改判 <strong>GO 0 PASS</strong>
+- UART 極性 Auto / Manual 選擇
+- 修正燒錄防呆偵測機制：<strong>Bank 1 重複 CRC 偵測</strong>
+- 修正 M8322CA/B 相容問題
+- 錯誤碼機制重構
+
+<span class="chip-tag">韌體更新視窗</span>
+- 工業風佈局重構
+- 修正 Bootloader 冷啟動 flash 進度卡在 0%（背景讀取改依 UseReportHeader 分支處理 64/65-byte report）
+
+<span class="chip-tag">MCU Board Config 工廠模式</span>
+- 工廠模式 Set MCU Board 前一律強制 BoardMode = 2（Machine Burn），走既有離線燒錄流程
+
+<span class="chip-tag">M8160 Design Tool</span>
+- Mode 判定規則改為表驅動（C1~O5 共 8 條規則，移除 DC-mode O1b/O2b），所有規則強制 Direct-PWM，並加嚴 PWM polarity / SoftSwitch / Hall / Standby 條件；不命中任何規則時顯示「No row matches」
+- User Mode UI 簡化：Tree DataGrid / Classic Grid / Pin Summary 同步隱藏 Drive mode、PWM polarity、DC source、Force startup；SoftSwitch 下拉由 4 項縮為 2 項（Square / 22.5°）
+- Forward mode PWM polarity 改為永遠可選／可見（不再受 DriveMode / User mode 閘門）
+- XP1 branch mode 0 / 7 簡化為單純 non-FR（移除 VSP / SET 子條件）
+- Close-loop SS 電壓改依 XP1 / YP Fix 狀態選表（rail band 進 Fix 表，否則 Not-Fix 表）
+
+<span class="chip-tag">HID Test 視窗</span>
+- 對齊 I2C / UART dashboard 風格
+
+<span class="chip-tag">M8314AB OSC Trim</span>
+- OSC Trim 支援 M8314AB 新映射表</div>
+    </li>
+
+    <li class="history-item">
+      <div class="history-header">V2.1.9653.496</div>
+      <div class="history-body"><span class="chip-tag">Firmware</span>
+- 更新韌體至 V26060500
+- <strong>目標 bank 已燒、內容不同卻想覆寫</strong> → 擋下（防止蓋掉成品）。若內容剛好相同 → 改判 <strong>GO 0 PASS</strong>
+- UART 極性 Auto / Manual 選擇
+- 修正燒錄防呆偵測機制：<strong>Bank 1 重複 CRC 偵測</strong>
+- 修正 M8322CA/B 相容問題
+- 錯誤碼機制重構
+
+<span class="chip-tag">韌體更新視窗</span>
+- 工業風佈局重構：標題加左側 hazard accent bar，新增三組區塊小標題（韌體檔案／進度／工程命令）含右側分隔線
+- 工程命令改為帶 ADV 標籤帽的獨立工具列（icon 在上、文字在下）
+- 主動作（取消／開始更新）移至右下；「開始更新」改用橘色 hazard accent 放大為主視覺
+- 按鈕／ProgressBar 樣式移入 UserControl.Resources，嵌入 MainWindow 或獨立 Window 兩種 host 皆生效
+- 新增 HazardAccentBrush / HazardAccentHover / HazardAccentForeground 至 Dark/Light 兩個色彩字典（主題感知）
+- 修正 Bootloader 冷啟動 flash 進度卡在 0%（背景讀取改依 UseReportHeader 分支處理 64/65-byte report）
+
+<span class="chip-tag">MCU Board Config 工廠模式</span>
+- 修正工廠模式下 McuBoardConfigUserControl 固定 Dark 不跟隨主題切換：本控制項經 ContentControl + DataTemplate 託管，父層主題走訪在 ContentControl 邊界停止；改為在自身 Loaded 自行呼叫 ThemeHelper.EnableThemeSync 訂閱主題同步
+- 工廠模式 Set MCU Board 前一律強制 BoardMode = 2（Machine Burn），走既有離線燒錄流程
+
+<span class="chip-tag">M8160 Design Tool</span>
+- Mode 判定規則改為表驅動（C1~O5 共 8 條規則，移除 DC-mode O1b/O2b），所有規則強制 Direct-PWM，並加嚴 PWM polarity / SoftSwitch / Hall / Standby 條件；不命中任何規則時顯示「No row matches」
+- User Mode UI 簡化：Tree DataGrid / Classic Grid / Pin Summary 同步隱藏 Drive mode、PWM polarity、DC source、Force startup；SoftSwitch 下拉由 4 項縮為 2 項（Square / 22.5°）
+- Forward mode PWM polarity 改為永遠可選／可見（不再受 DriveMode / User mode 閘門）
+- XP1 branch mode 0 / 7 簡化為單純 non-FR（移除 VSP / SET 子條件）
+- Close-loop SS 電壓改依 XP1 / YP Fix 狀態選表（rail band 進 Fix 表，否則 Not-Fix 表）
+
+<span class="chip-tag">HID Test 視窗</span>
+- 對齊 I2C / UART dashboard 風格：新增 Menu bar（File / Help / Layout）、Send/Receive 間 6px GridSplitter、水平／垂直佈局切換，視窗大小／佈局／比例持久化至 Registry
+- 新增 Help/HidTestHelp.html Quick Start
+- 移除重複標題列與堆疊狀態橫幅，狀態訊息統一改寫 Console Window（_logger）
+- 主題感知重構，移除硬編碼色彩
+
+<span class="chip-tag">其他</span>
+- StatusBar：PCBA 版本與「驅動板 UART 極性」緊鄰顯示成同一視覺群組，版本省略 "PCBA:" 前綴（僅顯示 Rev A / Rev B / Unknown）
+- Chip 定義改為純 embedded resource（publish 後不再輸出 chips/ 資料夾）；Export Chip Definition As 失敗時 fallback 至 embedded resource</div>
+    </li>
+
+    <li class="history-item">
+      <div class="history-header">V2.1.9643.487</div>
+      <div class="history-body"><span class="chip-tag">Hardware Test Dashboards</span>
+- UART CDC / UART HID / I2C 三個 Dashboard 視窗統一改版，套用相同的 Layout / Splitter / Menu / Help pattern
+
+<span class="chip-tag">M8314AB</span>
+- REG01[4:3] Floating option 依 REG04[7]（超高頻驅動）過濾可見項目：
+  - 一般模式（REG04[7]=0）：顯示 10° / 15°
+  - 超高頻模式（REG04[7]=1）：僅顯示 7.5°
+  - BackDoor / Engineering 模式永遠顯示全部三項
+  - 切換時若當前值不在新列表，自動鉗制到第一項避免 ComboBox 空白
+- 更新 REG01[4:3] Floating option bit width 與新增選項
+- GUI 移除「縮短開窗相位」(REG01 bit 4) 控制項；JSON 定義保留，BackDoor / Engineering Mode 仍可從 RegisterView 樹狀結構存取
+
+<span class="chip-tag">M8160</span>
+- Design Tool 新增 <strong>ADC ↔ V Conversion Tool</strong>：可直接在 Help 選單開啟互動式對照表，輸入電壓或 ADC code 即時查得對應 Mode / XP1 / YP / SS 區段與曲線值，方便外接電阻設計驗算
+- 修正 ADC forbidden band 邊界與設計者規格一致（Mode pin 中央禁區 step 116..139；XP1 / YP / SS 三段禁區 10..19 / 116..139 / 236..245），避免邊界值落在 spec 允許範圍卻被舊版誤判
+- Design Tool 結果欄新增 SS pin 秒數顯示（0.5 ~ 6 sec），FIX / forbidden 區由紅框旗標說明
+
+<span class="chip-tag">MXXXX</span>
+- 新增 M8888 I2C 測試晶片
+  - protocol = <code>i2c</code>，I2C 7-bit address = <code>0x08</code>
+  - 非 backdoor 暫存器 0x00–0x0F 僅保留骨架（無 fields、無 description）
+  - Backdoor 暫存器（REG7E–REG90）複製自 M8160AA
+  - I2C 協定的 MXXXX 晶片 register tree 在所有 operation mode（Offline / Programming / Online）皆可讀寫（不走 PGM 生命週期）
+
+<span class="chip-tag">PWM Dashboard</span>
+- Mxxxx Chip PWM duty 寫入支援 I2C 協定（手動 UART / I2C 切換，duty 0x87 走對應路徑）</div>
+    </li>
+
+    <li class="history-item">
+      <div class="history-header">V2.1.9637.481</div>
+      <div class="history-body"><span class="chip-tag">MXXXX</span>
+- 更新韌體，新增 V260515 PCBA 支援
+- 新增 PCBA 版本偵測，自動切換雙高壓控制
+- 整併「燒錄結果」與「換下一顆？」為單一 Yes/No 對話框
+- PGM/Online 進入時套用 Trim Bits OR-Merge，並 Read-back 同步至 Register Tree
+
+<span class="chip-tag">M8322</span>
+- 定位電流斜率為 0 時改採 Default 值
+- User Mode 開放顯示 IPD 頁面
+- 新增 OSC Auto Trim 支援
+- 進入 PGM 後自動將 Trim Bits 合併至 Registers
+
+<span class="chip-tag">M8160</span>
+- 更新 M8160 Design Tool
+- 重新整理 GUI 版面
+
+<span class="chip-tag">M8314BA</span>
+- Online RPM 計算公式改採 14-bit Speed
+- REG04[7] 與「超高頻驅動」CheckBox 解耦，獨立控制</div>
+    </li>
+
+    <li class="history-item">
+      <div class="history-header">V2.0.9628.470</div>
+      <div class="history-body"><span class="chip-tag">M8322CX</span>
+- 整合 M8322CA, M8322CB. 對齊 M8322CB.
+  - GUI 隱藏 M8322CA / M8322CB 不一致的選項
+  - Disable RPM Valid
+  - 測試及燒錄時視為同一顆 IC
+
+<span class="chip-tag">MXXXX</span>
+- 前一顆燒寫 bank1，下一顆新 IC 也會直接燒寫 bank1</div>
+    </li>
+
+    <li class="history-item">
+      <div class="history-header">V2.0.9617.450</div>
+      <div class="history-body"><span class="chip-tag">MXXXX</span>
+- support M8322CA, M8322CB, M8314, M8160, M8123, M8323
+- 串接 2 顆以上自動進入串接模式
+- 支援離線燒錄</div>
+    </li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  Generated from <code>GUI_Hardware_version.xlsx</code>
+</footer>
+
+<script>
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + target));
+    });
+  });
+</script>
+
+</body>
+</html>
